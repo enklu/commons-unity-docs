@@ -1,4 +1,4 @@
-# Commons-Unity-Async
+# Async
 
 The Async package provides primitives for working with asynchronous code. Many projects within the `Common` namespace use the `IAsyncToken<T>` interface, so it is best to get well acquainted with it. This object may be considered either a very simplified Promise, or just a wrapper around a callback.
 

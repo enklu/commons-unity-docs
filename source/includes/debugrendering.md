@@ -1,4 +1,4 @@
-# Commons-Unity-DebugRendering
+# Debug Rendering
 
 ## Overview
 

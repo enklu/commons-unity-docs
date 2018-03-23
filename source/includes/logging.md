@@ -1,4 +1,4 @@
-# Commons-Unity-Logging
+# Logging
 
 The logging package provides a simple interface for logging, as well as a few nice log targets.
 
