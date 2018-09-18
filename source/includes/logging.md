@@ -5,7 +5,7 @@ The logging package provides a simple interface for logging, as well as a few ni
 ## Log
 
 ```csharp
-Log.Debug(this, "This is a {0} {1}.", "debug", log");
+Log.Debug(this, "This is a {0} {1}.", "debug", "log");
 Log.Info(this, "This is an info log.");
 Log.Warning(this, "This is a warning log.");
 Log.Error(this, "This is an error log.");
