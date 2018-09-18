@@ -59,7 +59,7 @@ public MyClass(Dependency dependency)
 
 However, it has a whole different problem.
 
-In this example, we have an object that needs something to happen before it can initialize. However, what if `Dependency` has already called `OnReady`? This object will be waiting forever. The problem with events is that you may subscribe to late.
+In this example, we have an object that needs something to happen before it can initialize. However, what if `Dependency` has already called `OnReady`? This object will be waiting forever. The problem with events is that you may subscribe too late.
 
 Thus, the need arises for a primitive that will fix these two problems.
 
@@ -89,7 +89,7 @@ token.OnFailure(exception => ...);
 token.OnFinally(_ => ...);
 ```
 
-Our answer is `IAsyncToken<T>`. This object has acts much like an asynchronous counterpart to `try/catch/finally` blocks. At a high level, this object represents an asynchronous action being performed. This object accepts exactly one resolution.
+Our answer is `IAsyncToken<T>`. This object acts much like an asynchronous counterpart to `try/catch/finally` blocks. At a high level, this object represents an asynchronous action being performed. This object accepts exactly one resolution.
 
 In this example, internally to `Operation`, the token is being resolved with either a success or a failure. It cannot be resolved with both. Once a token has been resolved, its resolution cannot be changed.
 
@@ -225,7 +225,7 @@ Instead, if a callback is added to a token, it is _guaranteed_ to be called. Int
 var token = new AsyncToken<Void>(Void.Instance);
 ```
 
-There are some cases in which it's handy not to have to have to return anything in a token. In these cases, it's recommended to use `Void`.
+There are some cases in which it's handy not to have to return anything in a token. In these cases, it's recommended to use `Void`.
 
 ## Token()
 
