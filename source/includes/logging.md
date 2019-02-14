@@ -34,6 +34,34 @@ The `ILogTarget` interface is where the meat of the logging system resides. This
 
 These targets may be added and removed from the `Log` class at any time. Once an `ILogTarget` implementation has been added, logs will be forwarded to that target.
 
+## Log History
+
+> Generate a dump of the history. This will concatenate all the logs.
+
+```csharp
+var logDump = Log.History.GenerateDump();
+```
+
+> The histoy can be configured to filter at a log level.
+
+```csharp
+Log.History.Filter = LogLevel.Warning;
+```
+
+> The size of the buffer may also be set at runtime. This will restrict how many logs the history keeps in memory.
+
+```csharp
+Log.History.Size = 50;
+```
+
+> The dump may also be configured. The following will futher filter the dump, and can reverse the entries.
+
+```csharp
+Log.History.GenerateDump(LogLevel.Info, LogDumpOptions.Reverse);
+```
+
+The `History` object contains a rolling, in-memory history of the last N events.
+
 ## DefaultLogFormatter
 
 ```csharp
