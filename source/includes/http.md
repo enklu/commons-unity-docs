@@ -10,13 +10,64 @@ To make a request, `IHttpService` provides methods for several Http verbs (we do
 
 ```csharp
 
-var service = new HttpService(new JsonSerializer(), bootstrapper);
+var service = new HttpService(new JsonSerializer(), bootstrapper, new UrlFormatterCollection());
 
 ```
 
-One standard implementation is provided: `HttpService`. This implementation requires an `ISerializer` and an `IBootstrapper`. The serializer is so that `HttpService` can interact with XML, JSON, or any other serialization strategy. The bootstrapper is needed to abstract the service away from `MonoBehaviour`, but still use the Unity Http API.
+One standard implementation is provided: `HttpService`. This implementation requires an `ISerializer`, an `IBootstrapper`, and a `UrlFormatterCollection`. The serializer is so that `HttpService` can interact with XML, JSON, or any other serialization strategy. The bootstrapper is needed to abstract the service away from `MonoBehaviour`, but still use the Unity Http API. Lastly, the `UrlFormatterCollection` is to provide custom protocols for specific endpoints.
 
 In general, code should be written against the interface, not the implementation, allowing the user to stub out the service for testing.
+
+### Service Registration
+
+> The base url for service requests
+
+```csharp
+var serviceUrl = "http://myrestservice.com:9999/v1/";
+```
+
+> Create the formatter
+
+```csharp
+var serviceFormatter = new UrlFormatter();
+if (!serviceFormatter.FromUrl(serviceUrl))
+{
+	throw new Exception("Failed to create url formatter for service.");
+}
+```
+
+> Register the service using a custom service name
+
+```csharp
+_http.Services.Register("myservice", serviceFormatter);
+```
+
+> Shorthand protocol notation for making requests
+
+```csharp
+_http.Get("myservice://users/create")...
+```
+
+Registering a service using the [`UrlFormatter`](#urlformatter) provides convenience for specifying short-hand urls for endpoints. While registering a service for all requests is not necessary, it is a requirement if custom headers are used on a request.
+
+Registering a service name not only provides covenience for url resolution, but also allows separation of service configuration and specific service headers.
+
+## Headers and Authentication
+
+```csharp
+_http.Services.AddHeader("myservice", "Authorization", "Bearer " + token);
+```
+
+> Future requests made to the specific service will pass authentication header.
+
+```csharp
+_http.Get("myservice://users/create")...
+```
+
+Currently, headers may only be set for a specific service, not globally or per request.
+
+In our case, authentication is done via headers. We use the JWT standard, so once a user has obtained a token for a service, the service header is added for the token.
+
 
 ## GET/DELETE
 
@@ -76,49 +127,46 @@ _http
 
 POST and PUT requests are different only in that they allow passing in a body. With `HttpService`, the body is serialized using the passed in `ISerializer`.
 
-## Headers and Authentication
-
-```csharp
-_http.Headers.Add(Tuple.Create("Authorization", "Bearer " + token));
-```
-
-> Future requests will pass authentication header.
-
-```csharp
-_http.Get(url)...
-```
-
-Currently, headers may only be set globally, not per request.
-
-In our case, authentication is done via headers. We use the JWT standard, so one a user has obtained a token, the `IHttpService` is given the token.
-
-## UrlBuilder
+## UrlFormatter
 
 ### Basic Usage
 
 ```csharp
-var builder = _http.UrlBuilder;
-builder.BaseUrl = "my.baseurl.com";
-builder.Port = 10206;
-builder.version = "v2";
+var formatter = new UrlFormatter();
+formatter.BaseUrl = "my.baseurl.com";
+formatter.Port = 10206;
+formatter.Version = "v2";
 
-var token = _http.Get<MyResponse>(builder.Url("/user/" + myUserId));
+var url = formatter.Url("/user/" + myUserId);
 ```
 
-Generally, applications will not want to hard code URLs to make Http calls. Protocols, environments, ports, etc-- all of these are subject to change. Furthermore, users don't want to write the same `.Trim` methods over and over, making sure `/`s are in the right place. To provide for these needs, the `IHttpService` contains a `UrlBuilder` object which automatically cleans and formats urls.
+Generally, applications will not want to hard code URLs to make Http calls. Protocols, environments, ports, etc-- all of these are subject to change. Furthermore, users don't want to write the same `.Trim` methods over and over, making sure `/`s are in the right place. To provide for these needs, the `IHttpService.Services` accepts a `UrlFormatter` when [registering a service](#service-registration) which automatically cleans and formats urls which contain the service protocol.
 
 ### Replacement Tokens
 
 > Add a replacement.
 
 ```csharp
-builder.Replacements.Add(Tuple.Create("myUserId", userId));
+formatter.Replacements.Add(Tuple.Create("myUserId", userId));
+```
+
+> Done as part of a registered service on `IHttpService`
+
+```csharp
+var formatter = _http.Services.GetUrlFormatter("myservice");
+formatter.Replacements.Add(Tuple.Create("myUserId", userId));
 ```
 
 > Now the token may be used inline.
 
 ```csharp
-var token = _http.Get<MyProfile>(_http.UrlBuilder.Url("/user/{myUserId}"));
+var url = formatter.Url("/user/{myUserId}");
+```
+
+> Making a request via registered service on `IHttpService`
+
+```csharp
+_http.Get("myservice://user/{myUserId}");
 ```
 
 Tokens may also be added for automatic replacement.
@@ -131,9 +179,5 @@ Tokens may also be added for automatic replacement.
 
 ## Future needs
 
-* `UrlBuilder` improvements.
-	* Multiple builders.
-	* Automatically push URL through default `UrlBuilder` if url does not have protocol on the front.
-* Add `UrlBuilder.Url(string, replacements)`.
 * Ability to set headers per request.
 * Request failure should return `IHttpException`, which wraps exception with status code.
